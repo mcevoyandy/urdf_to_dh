@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- URDF with random joint attributes -->
+<!-- origin xyz values between -0.5 and 0.5 -->
+<!-- origin rpy values between -pi/2 and pi/2 -->
+<!-- axis xyz normalized vector with each component between -1 and 1 -->
+<robot name="randombot">
+    <link name="link0" >
+        <visual>
+            <origin xyz="0 0 0" rpy="0 0 0" />
+            <geometry>
+                <sphere radius="0.001" />
+            </geometry>
+        </visual>
+    </link>
+    <joint name="joint0" type="revolute">
+        <origin xyz="0.25264608 -0.36928516 -0.07542512" rpy="-1.37125888 -0.52586467 0.48036481" />
+        <parent link="link0" />
+        <child link="link1" />
+        <axis xyz="0.6882854605711649 0.36375525034206413 0.6276505736593584" />
+        <limit effort="0" velocity="0" lower="-3.14159" upper="3.14159" />
+    </joint>
+    <link name="link1"  />
+    <joint name="joint1" type="continuous">
+        <origin xyz="-0.34587733 0.42569095 0.36387111" rpy="-1.45346392 1.38589836 0.57038676" />
+        <parent link="link1" />
+        <child link="link2" />
+        <axis xyz="0.64588434 0.41715465 -0.63938675" />
+        <limit effort="0" velocity="0" />
+    </joint>
+    <link name="link2" />
+    <joint name="joint2" type="prismatic">
+        <origin xyz="-0.09568371 0.36267201 -0.45283459" rpy="-0.94566833 -0.7844613 1.12775882" />
+        <parent link="link2" />
+        <child link="link3" />
+        <axis xyz="0.16701077 -0.01484928  0.98584324" />
+        <limit effort="0" velocity="0" lower="-1" upper="1" />
+    </joint>
+    <link name="link3" />
+    <joint name="joint3" type="revolute">
+        <origin xyz="0.3719625 0.06784535 -0.029189" rpy="-0.38556409 0.07697968 -1.01601256" />
+        <parent link="link3" />
+        <child link="link4" />
+        <axis xyz="0.49477664 0.73859117 0.45790737" />
+        <limit effort="0" velocity="0" lower="-3.14159" upper="3.14159" />
+    </joint>
+    <link name="link4" />
+    <joint name="joint4" type="prismatic">
+        <origin xyz="-0.21056728 0.27939775 0.44306664" rpy="1.49721299 -1.46212235 -0.45362461" />
+        <parent link="link4" />
+        <child link="link5" />
+        <axis xyz="-0.47372207 -0.68654155  0.55158689" />
+        <limit effort="0" velocity="0" lower="-1" upper="1" />
+    </joint>
+    <link name="link5" />
+    <joint name="joint5" type="continuous">
+        <origin xyz="-0.02145769 0.29491213 -0.20013675" rpy="0.97156124 1.53641683 0.86121066" />
+        <parent link="link5" />
+        <child link="link6" />
+        <axis xyz="-0.83420329 0.47328479 0.28303068" />
+        <limit effort="0" velocity="0" />
+    </joint>
+    <link name="link6" />
+    <joint name="joint6" type="revolute">
+        <origin xyz="-0.41467675 -0.3550962 -0.41215747" rpy="0.98995634 -1.26187233  1.12988043" />
+        <parent link="link6" />
+        <child link="link7" />
+        <axis xyz="0.75508084 -0.6530005 -0.05867944" />
+        <limit effort="0" velocity="0" lower="-3.14159" upper="3.14159" />
+    </joint>
+    <link name="link7" />
+</robot>
