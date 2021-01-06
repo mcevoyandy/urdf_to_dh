@@ -26,9 +26,8 @@ world_tf_arg = ['0', '0', '0', '0', '0', '0', 'world', 'link0']
 
 def generate_launch_description():
     bringup_dir = get_package_share_directory(package_name)
-    rviz_filename = 'test_urdf.rviz'
-    rviz_config_file = ['-d', os.path.join(bringup_dir, rviz_filename)]
-    print(rviz_config_file)
+    rviz_filename = 'random_urdf.rviz'
+    rviz_config_file = ['-d', os.path.join(bringup_dir, 'launch', rviz_filename)]
 
     # Publish the static World coordinate system
     world_tf_cmd = Node(
@@ -39,7 +38,6 @@ def generate_launch_description():
 
     # Robot planning state publisher
     urdf_file = os.path.join(bringup_dir, 'urdf', urdf_filename)
-    print(urdf_file)
     robot_state_cmd = Node(
         package='robot_state_publisher',
         executable='robot_state_publisher',
