@@ -18,6 +18,8 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch_ros.actions import Node
 
+import maxar_launch.maxar_launch as ML
+
 package_name = 'urdf_to_dh'
 robot_name = 'random'
 urdf_filename = 'random.urdf'
@@ -30,11 +32,7 @@ def generate_launch_description():
     rviz_config_file = ['-d', os.path.join(bringup_dir, 'launch', rviz_filename)]
 
     # Publish the static World coordinate system
-    world_tf_cmd = Node(
-        package='tf2_ros',
-        executable='static_transform_publisher',
-        arguments=world_tf_arg
-    )
+    world_tf_cmd = ML.launch_static_tf('world', 'link0')
 
     # Robot planning state publisher
     urdf_file = os.path.join(bringup_dir, 'urdf', urdf_filename)
@@ -53,13 +51,7 @@ def generate_launch_description():
     )
 
     # RViz
-    rviz_cmd = Node(
-        package='rviz2',
-        executable='rviz2',
-        name='rviz2',
-        arguments=rviz_config_file,
-        output='screen'
-    )
+    rviz_cmd = ML.launch_rviz(rviz_config_file)
 
     return LaunchDescription([
         world_tf_cmd,
