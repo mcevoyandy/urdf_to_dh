@@ -16,7 +16,8 @@
         <origin xyz="0.25264608 -0.36928516 -0.07542512" rpy="-1.37125888 -0.52586467 0.48036481" />
         <parent link="link0" />
         <child link="link1" />
-        <axis xyz="0.6882854605711649 0.36375525034206413 0.6276505736593584" />
+        <!-- <axis xyz="0.6882854605711649 0.36375525034206413 0.6276505736593584" /> -->
+        <axis xyz="1 0 0" />
         <limit effort="0" velocity="0" lower="-3.14159" upper="3.14159" />
     </joint>
     <link name="link1"  />
@@ -54,7 +55,7 @@
     <link name="link5" />
     <joint name="joint5" type="continuous">
         <origin xyz="-0.02145769 0.29491213 -0.20013675" rpy="0.97156124 1.53641683 0.86121066" />
-        <parent link="link5" />
+        <parent link="link3" />
         <child link="link6" />
         <axis xyz="-0.83420329 0.47328479 0.28303068" />
         <limit effort="0" velocity="0" />
