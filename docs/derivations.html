@@ -13,6 +13,7 @@
         <script type="text/javascript" src="_static/underscore.js"></script>
         <script type="text/javascript" src="_static/doctools.js"></script>
         <script type="text/javascript" src="_static/language_data.js"></script>
+        <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script src="_static/js/theme.js"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
@@ -37,7 +38,17 @@
               <p class="caption"><span class="caption-text">Contents:</span></p>
 <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">URDF to DH Frame Conversions</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">URDF to DH Frame Conversions</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#overview">Overview</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#cases">Cases</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#collinear">Collinear</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#parallel">Parallel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#intersecting">Intersecting</a></li>
+<li class="toctree-l3"><a class="reference internal" href="#skew">Skew</a></li>
+</ul>
+</li>
+</ul>
+</li>
 </ul>
 
         </div>
@@ -66,7 +77,101 @@
              
   <div class="section" id="urdf-to-dh-frame-conversions">
 <h1>URDF to DH Frame Conversions<a class="headerlink" href="#urdf-to-dh-frame-conversions" title="Permalink to this headline">¶</a></h1>
-<p>Derivations detailing how to extract the DH Parameters from the URDF frames will go here.</p>
+<div class="section" id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
+<p>Each link in a URDF is connected by joint elements. The joint element describes a homogeneous transformation that will take coordinates in the child link’s coordinate frame and transform them into the parent link’s coordinate frame. The joint elements also give the axis of the joint with respect to the origin of the child link’s coordinate frame.</p>
+<div class="figure" id="id3">
+<a class="reference internal image-reference" href="http://wiki.ros.org/urdf/XML/joint?action=AttachFile&amp;do=get&amp;target=joint.png"><img alt="Relationship of link and joint URDF elements" src="http://wiki.ros.org/urdf/XML/joint?action=AttachFile&amp;do=get&amp;target=joint.png" style="width: 400px;" /></a>
+<p class="caption"><span class="caption-text">(From <a class="reference external" href="wiki.ros.org/urdf/XML/joint">wiki.ros.org/urdf/XML/joint</a>)</span></p>
+</div>
+<p>Starting with the assumption that the root frame of the URDF and the root frame of the DH parameterization are equivalent, our problem becomes determining the DH parameterization that also describes the child link.</p>
+<div class="figure">
+<img alt="_images/urdf_to_dh_frame.png" src="_images/urdf_to_dh_frame.png" />
+</div>
+<p>As we create the new DH frames, it becomes clear that each new joint is solved in a similar manner to the first joint. As we add DH frames, we use our knowledge of the previous frame to solve for the next DH frame in the tree.</p>
+<div class="figure">
+<img alt="_images/next_urdf_to_dh_frame.png" src="_images/next_urdf_to_dh_frame.png" />
+</div>
+</div>
+<div class="section" id="cases">
+<h2>Cases<a class="headerlink" href="#cases" title="Permalink to this headline">¶</a></h2>
+<p>Using the framework above, there are four different cases to evaluate. The URDF joint axis with respect to the DH parent frame’s z-axis can be:</p>
+<ol class="arabic simple">
+<li>Collinear</li>
+<li>Parallel</li>
+<li>Intersecting</li>
+<li>Skew</li>
+</ol>
+<div class="section" id="collinear">
+<h3>Collinear<a class="headerlink" href="#collinear" title="Permalink to this headline">¶</a></h3>
+<p>The simplest case, take the z-axis (remember the parent frame is assumed to already be DH parameterized frame) and test if it is collinear given the origin of the child frame and a vector describing the joint axis.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">are_collinear</span><span class="p">(</span><span class="n">point1</span><span class="p">,</span> <span class="n">vec1</span><span class="p">,</span> <span class="n">point2</span><span class="p">,</span> <span class="n">vec2</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Determine if vectors are collinear.&quot;&quot;&quot;</span>
+
+    <span class="c1"># To be collinear, vectors must be parallel</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">are_parallel</span><span class="p">(</span><span class="n">vec1</span><span class="p">,</span> <span class="n">vec2</span><span class="p">):</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="c1"># If parallel and point1 is coincident with point2, vectors are collinear</span>
+    <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">point1</span><span class="p">,</span> <span class="n">point2</span><span class="p">)):</span>
+        <span class="k">return</span> <span class="kc">True</span>
+
+    <span class="c1"># If vectors are parallel, point2 can be defined as p2 = p1 + t * v1</span>
+    <span class="n">t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">3</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">vec1</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">t</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">point2</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">-</span> <span class="n">point1</span><span class="p">[</span><span class="n">idx</span><span class="p">])</span> <span class="o">/</span> <span class="n">vec1</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+    <span class="n">p2</span> <span class="o">=</span> <span class="n">point1</span> <span class="o">+</span> <span class="n">t</span> <span class="o">*</span> <span class="n">vec1</span>
+
+    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">p2</span><span class="p">,</span> <span class="n">point2</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="figure">
+<img alt="_images/collinear_case.png" src="_images/collinear_case.png" />
+</div>
+<p>The DH Parameters for this frame are then:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="37%" />
+<col width="63%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">Parameter</th>
+<th class="head">Value</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>d</td>
+<td>Distance to child origin</td>
+</tr>
+<tr class="row-odd"><td><span class="math notranslate nohighlight">\(\theta\)</span></td>
+<td>Free parameter <a class="footnote-reference" href="#id2" id="id1">[1]</a></td>
+</tr>
+<tr class="row-even"><td>a</td>
+<td>0</td>
+</tr>
+<tr class="row-odd"><td><span class="math notranslate nohighlight">\(\alpha\)</span></td>
+<td>0 or <span class="math notranslate nohighlight">\(\pi\)</span></td>
+</tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id1">[1]</a></td><td>Typically left as 0</td></tr>
+</tbody>
+</table>
+</div>
+<div class="section" id="parallel">
+<h3>Parallel<a class="headerlink" href="#parallel" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="intersecting">
+<h3>Intersecting<a class="headerlink" href="#intersecting" title="Permalink to this headline">¶</a></h3>
+</div>
+<div class="section" id="skew">
+<h3>Skew<a class="headerlink" href="#skew" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
 </div>
 
 
