@@ -1,4 +1,64 @@
 URDF to DH Frame Conversions
 ============================
 
-Derivations detailing how to extract the DH Parameters from the URDF frames will go here.
+Overview
+--------
+
+Each link in a URDF is connected by joint elements. The joint element describes a homogeneous transformation that will take coordinates in the child link's coordinate frame and transform them into the parent link's coordinate frame. The joint elements also give the axis of the joint with respect to the origin of the child link's coordinate frame.
+
+.. figure:: http://wiki.ros.org/urdf/XML/joint?action=AttachFile&do=get&target=joint.png
+   :width: 400
+   :alt: Relationship of link and joint URDF elements
+
+   (From `wiki.ros.org/urdf/XML/joint <wiki.ros.org/urdf/XML/joint>`_)
+
+
+Starting with the assumption that the root frame of the URDF and the root frame of the DH parameterization are equivalent, our problem becomes determining the DH parameterization that also describes the child link.
+
+.. figure:: _static/urdf_to_dh_frame.png
+
+As we create the new DH frames, it becomes clear that each new joint is solved in a similar manner to the first joint. As we add DH frames, we use our knowledge of the previous frame to solve for the next DH frame in the tree.
+
+.. figure:: _static/next_urdf_to_dh_frame.png
+
+Cases
+-----
+
+Using the framework above, there are four different cases to evaluate. The URDF joint axis with respect to the DH parent frame's z-axis can be:
+
+1. Collinear
+2. Parallel
+3. Intersecting
+4. Skew
+
+Collinear
+~~~~~~~~~
+
+The simplest case, take the z-axis (remember the parent frame is assumed to already be DH parameterized frame) and test if it is collinear given the origin of the child frame and a vector describing the joint axis.
+
+.. literalinclude:: ../urdf_to_dh/geometry_helpers.py
+   :pyobject: are_collinear
+
+.. figure:: _static/collinear_case.png
+
+The DH Parameters for this frame are then:
+
+==============  ========================
+Parameter       Value
+==============  ========================
+d               Distance to child origin
+:math:`\theta`  0 [#]_
+a               0
+:math:`\alpha`  0 or :math:`\pi`
+==============  ========================
+
+.. [#] Technically a free parameter, but usually no reason not to use zero.
+
+Parallel
+~~~~~~~~
+
+Intersecting
+~~~~~~~~~~~~
+
+Skew
+~~~~
