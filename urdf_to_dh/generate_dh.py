@@ -46,7 +46,7 @@ class GenerateDhParams(rclpy.node.Node):
         self.urdf_links: dict[str, dict] = {}
         self.urdf_file = ''
         self.urdf_tree_nodes: list[AnyNode] = []
-        self.root_link: AnyNode | None = None
+        self.root_node: AnyNode | None = None
         self.verbose = False
         self.marker_pub = mh.MarkerPublisher()
 
@@ -93,7 +93,7 @@ class GenerateDhParams(rclpy.node.Node):
         for n in self.urdf_tree_nodes:
             if n.parent is None:
                 num_nodes_no_parent += 1
-                self.root_link = n
+                self.root_node = n
 
         if num_nodes_no_parent != 1:
             print('Error: Should only be one root link')
@@ -101,9 +101,9 @@ class GenerateDhParams(rclpy.node.Node):
 
         # Root link DH will be identity, set dh_found = True
         # TODO: Probably not needed since order iter is used
-        self.urdf_links[self.root_link.id]['dh_found'] = True
+        self.urdf_links[self.root_node.id]['dh_found'] = True
         print('URDF Tree:')
-        for pre, _, node in RenderTree(self.root_link):
+        for pre, _, node in RenderTree(self.root_node):
             print(f'{pre}{node.id}')
 
         print('Joint Info:')
@@ -111,7 +111,7 @@ class GenerateDhParams(rclpy.node.Node):
 
     def calculate_tfs_in_world_frame(self) -> None:
         print('Calculate world tfs:')
-        for n in LevelOrderIter(self.root_link):
+        for n in LevelOrderIter(self.root_node):
             if (n.type == 'link') and (n.parent is not None):
                 print(f'\nget tf from "{n.parent.parent.id}" to "{n.id}"')
                 parent_tf_world = self.urdf_links[n.parent.parent.id]['abs_tf']
@@ -140,11 +140,11 @@ class GenerateDhParams(rclpy.node.Node):
     def calculate_dh_params(self) -> None:
         print('calculate_dh_params')
         # Node process order:
-        print('process_order =\n{}'.format([urdf_node.id for urdf_node in LevelOrderIter(self.root_link)]))
+        print('process_order =\n{}'.format([urdf_node.id for urdf_node in LevelOrderIter(self.root_node)]))
         # List of ['joint', 'parent', 'child', 'd', 'theta', 'r', 'alpha']
         robot_dh_params = []
 
-        for urdf_node in LevelOrderIter(self.root_link):
+        for urdf_node in LevelOrderIter(self.root_node):
             if urdf_node.type == 'link' and (not self.urdf_links[urdf_node.id]['dh_found']):
                 print(f'\n\nprocess dh params for {urdf_node.id}')
 
