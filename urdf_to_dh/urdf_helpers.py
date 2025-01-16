@@ -5,7 +5,7 @@ import xml.etree.ElementTree as ET
 import numpy as np
 
 
-def get_urdf_root(urdf_file):
+def get_urdf_root(urdf_file: str) -> ET.Element:
     """Parse a URDF for joints.
 
     Args:
@@ -22,10 +22,18 @@ def get_urdf_root(urdf_file):
     return tree.getroot()
 
 
-def process_joint(joint):
+def process_joint(joint: ET.Element) -> tuple[str, dict]:
     """Extracts the relevant joint info into a dictionary.
     Args:
     Returns:
+    (joint_names, joint_info)
+        with joint_info a dictionary containing:
+            - axis: the axis of rotation for the joint (np.ndarray)
+            - xyz: the xyz offset of the joint (np.ndarray)
+            - rpy: the roll, pitch, yaw offset of the joint (np.ndarray)
+            - parent: the parent link of the joint (ET.Element)
+            - child: the child link of the joint (ET.Element)
+            - dh: the dh parameters for the joint (np.ndarray)
     """
     axis = np.array([1, 0, 0])
     xyz = np.zeros(3)
