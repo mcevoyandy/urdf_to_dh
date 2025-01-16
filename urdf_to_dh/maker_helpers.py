@@ -1,7 +1,10 @@
 import rclpy
 import rclpy.node
-from visualization_msgs.msg import Marker
+
 from geometry_msgs.msg import Point
+
+from visualization_msgs.msg import Marker
+
 
 class MarkerPublisher(rclpy.node.Node):
 

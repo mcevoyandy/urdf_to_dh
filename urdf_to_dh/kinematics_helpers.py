@@ -1,6 +1,6 @@
-import numpy as np
 import math
 
+import numpy as np
 # Kinematics helper functions
 def x_rotation(theta):
     """The 3x3 rotation matrix for a rotation of `theta` radians about the x-axis."""
