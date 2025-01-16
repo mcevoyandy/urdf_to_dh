@@ -1,7 +1,10 @@
+"""Helper functions for parsing URDF"""
+
 import xml.etree.ElementTree as ET
+
 import numpy as np
 
-# Helper functions for parsing the URDF
+
 def get_urdf_root(urdf_file):
     """Parse a URDF for joints.
 
@@ -17,6 +20,7 @@ def get_urdf_root(urdf_file):
         print('ERROR: Could not parse urdf file.')
 
     return tree.getroot()
+
 
 def process_joint(joint):
     """Extracts the relevant joint info into a dictionary.
@@ -41,4 +45,14 @@ def process_joint(joint):
             parent_link = child.get('link')
         elif child.tag == 'child':
             child_link = child.get('link')
-    return joint_name, {'axis': axis, 'xyz': xyz, 'rpy': rpy, 'parent': parent_link, 'child': child_link, 'dh': np.zeros(4)}
+    return (
+            joint_name,
+            {
+                'axis': axis,
+                'xyz': xyz,
+                'rpy': rpy,
+                'parent': parent_link,
+                'child': child_link,
+                'dh': np.zeros(4),
+            },
+    )

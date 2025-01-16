@@ -46,12 +46,11 @@ class GenerateDhParams(rclpy.node.Node):
         self.verbose = False
         self.marker_pub = mh.MarkerPublisher()
 
-    def InitializeDhNode(self):
+    def initialize_dh_node(self):
         self.get_logger().info('Initializing...')
 
         self.urdf_file = self.get_parameter('urdf_file').get_parameter_value().string_value
-        self.get_logger().info('URDF file = %s' % self.urdf_file)
-
+        self.get_logger().info(f'URDF file = {self.urdf_file}')
 
     def parse_urdf(self):
         # Get the root of the URDF and extract all of the joints
@@ -60,7 +59,13 @@ class GenerateDhParams(rclpy.node.Node):
         # Parse all links first and add to tree
         for child in urdf_root:
             if child.tag == 'link':
-                self.urdf_links[child.get('name')] = {'rel_tf': np.eye(4), 'abs_tf': np.eye(4), 'dh_tf': np.eye(4), 'abs_dh_tf': np.eye(4), 'dh_found': False}
+                self.urdf_links[child.get('name')] = {
+                        'rel_tf': np.eye(4),
+                        'abs_tf': np.eye(4),
+                        'dh_tf': np.eye(4),
+                        'abs_dh_tf': np.eye(4),
+                        'dh_found': False,
+                }
                 node = AnyNode(id=child.get('name'), parent=None, children=None, type='link')
                 self.urdf_tree_nodes.append(node)
 
@@ -82,29 +87,29 @@ class GenerateDhParams(rclpy.node.Node):
         # Find root link
         num_nodes_no_parent = 0
         for n in self.urdf_tree_nodes:
-            if n.parent == None:
+            if n.parent is None:
                 num_nodes_no_parent += 1
                 self.root_link = n
 
-        if num_nodes_no_parent == 1:
-            # Root link DH will be identity, set dh_found = True
-            # TODO: Probably not needed since order iter is used
-            self.urdf_links[self.root_link.id]['dh_found'] = True
-            print("URDF Tree:")
-            for pre, _, node in RenderTree(self.root_link):
-                print('%s%s' % (pre, node.id))
+        if num_nodes_no_parent != 1:
+            print('Error: Should only be one root link')
+            return
 
-            print("Joint Info:")
-            pprint.pprint(self.urdf_joints)
-        else:
-            print("Error: Should only be one root link")
+        # Root link DH will be identity, set dh_found = True
+        # TODO: Probably not needed since order iter is used
+        self.urdf_links[self.root_link.id]['dh_found'] = True
+        print('URDF Tree:')
+        for pre, _, node in RenderTree(self.root_link):
+            print(f'{pre}{node.id}')
 
+        print('Joint Info:')
+        pprint.pprint(self.urdf_joints)
 
     def calculate_tfs_in_world_frame(self):
-        print("Calculate world tfs:")
+        print('Calculate world tfs:')
         for n in LevelOrderIter(self.root_link):
-            if n.type == 'link' and n.parent != None:
-                print("\nget tf from ", n.parent.parent.id, " to ", n.id)
+            if (n.type == 'link') and (n.parent is not None):
+                print(f'\nget tf from "{n.parent.parent.id}" to "{n.id}"')
                 parent_tf_world = self.urdf_links[n.parent.parent.id]['abs_tf']
                 xyz = self.urdf_joints[n.parent.id]['xyz']
                 rpy = self.urdf_joints[n.parent.id]['rpy']
@@ -113,32 +118,30 @@ class GenerateDhParams(rclpy.node.Node):
                 tf[0:3, 3] = xyz
                 self.urdf_links[n.id]['rel_tf'] = tf
 
-                abs_tf = np.eye(4)
-                abs_tf = np.matmul(parent_tf_world, tf)
+                abs_tf = parent_tf_world @ tf
                 self.urdf_links[n.id]['abs_tf'] = abs_tf
 
-        # print("Link Info:")
+        # print('Link Info:')
         # for link_name, link_data in self.urdf_links.items():
-        #     print("\n=====", link_name)
-        #     print("rel_tf")
+        #     print('\n=====', link_name)
+        #     print('rel_tf')
         #     print(link_data['rel_tf'])
-        #     print("abs_tf")
+        #     print('abs_tf')
         #     print(link_data['abs_tf'])
-        #     print("dh_tf")
+        #     print('dh_tf')
         #     print(link_data['dh_tf'])
-        #     print("abs_dh_tf")
+        #     print('abs_dh_tf')
         #     print(link_data['abs_dh_tf'])
 
-
     def calculate_dh_params(self):
-        print("calculate_dh_params")
+        print('calculate_dh_params')
         # Node process order:
-        print("process_order = \n", [urdf_node.id for urdf_node in LevelOrderIter(self.root_link)])
+        print('process_order =\n{}'.format([urdf_node.id for urdf_node in LevelOrderIter(self.root_link)]))
         robot_dh_params = []
 
         for urdf_node in LevelOrderIter(self.root_link):
-            if urdf_node.type == 'link' and self.urdf_links[urdf_node.id]['dh_found'] == False:
-                print("\n\nprocess dh params for ", urdf_node.id)
+            if urdf_node.type == 'link' and (not self.urdf_links[urdf_node.id]['dh_found']):
+                print(f'\n\nprocess dh params for {urdf_node.id}')
 
                 # TF from current link frame to world frame
                 link_to_world = self.urdf_links[urdf_node.id]['abs_tf']
@@ -147,17 +150,22 @@ class GenerateDhParams(rclpy.node.Node):
                 parent_to_world_dh = self.urdf_links[urdf_node.parent.parent.id]['abs_dh_tf']
 
                 # TF from link frame to parent dh frame
-                link_to_parent_dh = np.matmul(kh.inv_tf(parent_to_world_dh), link_to_world)
+                link_to_parent_dh = kh.inv_tf(parent_to_world_dh) @ link_to_world
 
                 # Find DH parameters
                 # Publish Joint axis for visual verification
-                self.marker_pub.publish_arrow(urdf_node.id, np.zeros(3), self.urdf_joints[urdf_node.parent.id]['axis'], [1.0, 0.0, 1.0, 0.2])
-                axis = np.matmul(link_to_parent_dh[0:3, 0:3], self.urdf_joints[urdf_node.parent.id]['axis'])
+                self.marker_pub.publish_arrow(
+                        urdf_node.id,
+                        np.zeros(3),
+                        self.urdf_joints[urdf_node.parent.id]['axis'],
+                        [1.0, 0.0, 1.0, 0.2],
+                )
+                axis = link_to_parent_dh[0:3, 0:3] @ self.urdf_joints[urdf_node.parent.id]['axis']
 
-                dh_params = self.get_joint_dh_params(link_to_parent_dh, axis)
+                dh_params = self._get_joint_dh_params(link_to_parent_dh, axis)
 
                 dh_frame = kh.get_dh_frame(dh_params)
-                abs_dh_frame = np.matmul(parent_to_world_dh, dh_frame)
+                abs_dh_frame = parent_to_world_dh @ dh_frame
 
                 self.urdf_links[urdf_node.id]['dh_tf'] = dh_frame
 
@@ -165,19 +173,15 @@ class GenerateDhParams(rclpy.node.Node):
                 self.marker_pub.publish_frame('world', abs_dh_frame)
                 robot_dh_params.append([urdf_node.parent.id, urdf_node.parent.parent.id, urdf_node.id] + list(dh_params.round(5)))
 
-
-
         pd_frame = pd.DataFrame(robot_dh_params, columns=['joint', 'parent', 'child', 'd', 'theta', 'r', 'alpha'])
-        pd_frame['theta'] = pd_frame['theta'] * 180.0 / math.pi
-        pd_frame['alpha'] = pd_frame['alpha'] * 180.0 / math.pi
-        print("\nDH Parameters: (csv)")
+        pd_frame['theta'] *= 180.0 / math.pi
+        pd_frame['alpha'] *= 180.0 / math.pi
+        print('\nDH Parameters: (csv)')
         print(pd_frame.to_csv())
-        print("\nDH Parameters: (markdown)")
+        print('\nDH Parameters: (markdown)')
         print(pd_frame.to_markdown())
 
-
-
-    def get_joint_dh_params(self, rel_link_frame, axis):
+    def _get_joint_dh_params(self, rel_link_frame, axis):
         dh_params = np.zeros(4)
 
         # Get the joint axis in the parent frame
@@ -186,7 +190,7 @@ class GenerateDhParams(rclpy.node.Node):
         #     parent_tf_to_child_tf = kh.get_extrinsic_rotation(joint_data['rpy'])
         #     # print(parent_tf_to_child_tf)
 
-        #     axis_in_parent_tf = np.matmul(parent_tf_to_child_tf, joint_data['axis'])
+        #     axis_in_parent_tf = parent_tf_to_child_tf @ joint_data['axis']
         #     self.publish_arrow(joint_data['parent'], joint_data['xyz'], axis_in_parent_tf)
         #     # print(axis_in_parent_tf)
         origin_xyz = rel_link_frame[0:3, 3]
@@ -194,28 +198,27 @@ class GenerateDhParams(rclpy.node.Node):
         print(axis)
         # Collinear case
         if gh.are_collinear(np.zeros(3), z_axis, origin_xyz, axis):
-            print("  Process collinear case.")
+            print('  Process collinear case.')
             dh_params = self.process_collinear_case(origin_xyz, rel_link_frame[0:3, 0])
             # continue
 
         # Parallel case
         elif gh.are_parallel(z_axis, axis):
-            print("  Process parallel case.")
+            print('  Process parallel case.')
             dh_params = self.process_parallel_case(origin_xyz)
             # continue
 
         # Intersect case
         elif gh.lines_intersect(np.zeros(3), z_axis, origin_xyz, axis)[0]:
-            print("  Process intersection case.")
+            print('  Process intersection case.')
             print(rel_link_frame)
             dh_params = self.process_intersection_case(origin_xyz, axis)
             # continue
 
         # Skew case
         else:
-            print("  Process skew case.")
-            dh_params = self.process_skew_case(origin_xyz, axis)
-
+            print('  Process skew case.')
+            dh_params = self._process_skew_case(origin_xyz, axis)
 
         # Visualize the "d" component
         # self.publish_arrow(joint_data['parent'], np.zeros(3), pointA, 0.0, 0.0, 1.0, 0.5)
@@ -268,7 +271,7 @@ class GenerateDhParams(rclpy.node.Node):
 
         return dh_params
 
-    def process_skew_case(self, origin, direction):
+    def _process_skew_case(self, origin, direction):
         pointA = np.zeros(3)
         pointB = np.zeros(3)
         dh_params = np.zeros(4)
@@ -304,7 +307,7 @@ def main():
     print('Starting GenerateDhParams Node...')
     rclpy.init()
     node = GenerateDhParams()
-    node.InitializeDhNode()
+    node.initialize_dh_node()
     node.parse_urdf()
     node.calculate_tfs_in_world_frame()
     node.calculate_dh_params()
@@ -315,6 +318,7 @@ def main():
         pass
 
     rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()

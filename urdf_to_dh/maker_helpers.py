@@ -13,7 +13,6 @@ class MarkerPublisher(rclpy.node.Node):
         self.marker_id = 0
         self.marker_publisher = self.create_publisher(Marker, 'topic', 10)
 
-
     def publish_arrow(self, frame, origin, direction, color):
         # Make publish arrow. Start at xyz, then xyz + axis
         marker_msg = Marker()
