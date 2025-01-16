@@ -7,25 +7,31 @@ import numpy as np
 # Kinematics helper functions
 def x_rotation(theta: float) -> np.ndarray:
     """The 3x3 rotation matrix for a rotation of `theta` radians about the x-axis."""
+    ct = math.cos(theta)
+    st = math.sin(theta)
     return np.array([
         [1, 0, 0],
-        [0, math.cos(theta), -math.sin(theta)],
-        [0, math.sin(theta), math.cos(theta)]])
+        [0, ct, -st],
+        [0, st, ct]])
 
 
 def y_rotation(theta: float) -> np.ndarray:
     """The 3x3 rotation matrix for a rotation of `theta` radians about the y-axis."""
+    ct = math.cos(theta)
+    st = math.sin(theta)
     return np.array([
-        [math.cos(theta), 0, math.sin(theta)],
+        [ct, 0, st],
         [0, 1, 0],
-        [-math.sin(theta), 0, math.cos(theta)]])
+        [-st, 0, ct]])
 
 
 def z_rotation(theta: float) -> np.ndarray:
     """The 3x3 rotation matrix for a rotation of `theta` radians about the z-axis."""
+    ct = math.cos(theta)
+    st = math.sin(theta)
     return np.array([
-        [math.cos(theta), -math.sin(theta), 0],
-        [math.sin(theta), math.cos(theta), 0],
+        [ct, -st, 0],
+        [st, ct, 0],
         [0, 0, 1]])
 
 
@@ -70,19 +76,15 @@ def get_dh_frame(dh_params: Iterable[float]) -> np.ndarray:
     r = dh_params[2]
     alpha = dh_params[3]
 
-    dh_frame = np.eye(4)
+    ca = math.cos(alpha)
+    sa = math.sin(alpha)
+    ct = math.cos(theta)
+    st = math.sin(theta)
+    dh_frame = np.array([
+        [ct, -st * ca, st * sa, r * ct],
+        [st, ct * ca, -ct * sa, r * st],
+        [0, sa, ca, d],
+        [0, 0, 0, 1],
+    ])
 
-    dh_frame[0, 0] = math.cos(theta)
-    dh_frame[0, 1] = -math.sin(theta) * math.cos(alpha)
-    dh_frame[0, 2] = math.sin(theta) * math.sin(alpha)
-    dh_frame[0, 3] = r * math.cos(theta)
-
-    dh_frame[1, 0] = math.sin(theta)
-    dh_frame[1, 1] = math.cos(theta) * math.cos(alpha)
-    dh_frame[1, 2] = -math.cos(theta) * math.sin(alpha)
-    dh_frame[1, 3] = r * math.sin(theta)
-
-    dh_frame[2, 1] = math.sin(alpha)
-    dh_frame[2, 2] = math.cos(alpha)
-    dh_frame[2, 3] = d
     return dh_frame
