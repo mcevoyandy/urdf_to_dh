@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import math
 import pprint
+import sys
 
 import rclpy
 import rclpy.node
@@ -100,7 +101,7 @@ class GenerateDhParams(rclpy.node.Node):
                 self.root_node = n
 
         if num_nodes_no_parent != 1:
-            print('Error: Should only be one root link')
+            print('Error: Should only be one root link', file=sys.stderr)
             return
 
         # Root link DH will be identity, set dh_found = True
