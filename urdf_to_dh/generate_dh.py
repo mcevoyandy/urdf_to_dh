@@ -39,7 +39,7 @@ class GenerateDhParams(rclpy.node.Node):
     def __init__(self):
         super().__init__('generate_dh_param')
 
-        self.declare_parameter('urdf_file')
+        self.declare_parameter('urdf_file', rclpy.Parameter.Type.STRING)
         # The map {joint_name: joint_info}, where joint_info is a map with keys
         # 'axis', 'xyz', 'rpy', 'parent', 'child', 'dh'.
         self.urdf_joints: dict[str, dict] = {}
