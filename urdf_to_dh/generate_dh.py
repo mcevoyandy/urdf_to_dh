@@ -156,7 +156,7 @@ class GenerateDhParams(rclpy.node.Node):
         print('Calculate world tfs:')
         for n in LevelOrderIter(self.root_node):
             if (n.type == 'link') and (n.parent is not None):
-                print(f'\nget tf from "{n.parent.parent.id}" to "{n.id}"')
+                print(f'\nTransform from "{n.parent.parent.id}" to "{n.id}":')
                 parent_tf_world = self.urdf_links[n.parent.parent.id]['abs_tf']
                 xyz = self.urdf_joints[n.parent.id]['xyz']
                 rpy = self.urdf_joints[n.parent.id]['rpy']
@@ -167,6 +167,9 @@ class GenerateDhParams(rclpy.node.Node):
 
                 abs_tf = parent_tf_world @ tf
                 self.urdf_links[n.id]['abs_tf'] = abs_tf
+
+                print(f'relative {tf.flatten().tolist()}')
+                print(f'absolute {abs_tf.flatten().tolist()}')
 
         # print('Link Info:')
         # for link_name, link_data in self.urdf_links.items():
