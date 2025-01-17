@@ -112,7 +112,8 @@ class GenerateDhParams(rclpy.node.Node):
         self.urdf_links[self.root_node.id]['dh_found'] = True
         print('URDF Tree:')
         for pre, _, node in RenderTree(self.root_node):
-            print(f'{pre}{node.id}')
+            joint_type_str = '' if node.type == 'link' else f' ({self.urdf_joints[node.id]["type"]})'
+            print(f'{pre}{node.id}{joint_type_str}')
 
         # Construct the simplified tree, without fixed joints
         # except for leaf links.
