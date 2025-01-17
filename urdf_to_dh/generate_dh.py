@@ -176,18 +176,6 @@ class GenerateDhParams(rclpy.node.Node):
                 self._print(f'relative {tf.flatten().tolist()}')
                 self._print(f'absolute {abs_tf.flatten().tolist()}')
 
-        # print('Link Info:')
-        # for link_name, link_data in self.urdf_links.items():
-        #     print('\n=====', link_name)
-        #     print('rel_tf')
-        #     print(link_data['rel_tf'])
-        #     print('abs_tf')
-        #     print(link_data['abs_tf'])
-        #     print('dh_tf')
-        #     print(link_data['dh_tf'])
-        #     print('abs_dh_tf')
-        #     print(link_data['abs_dh_tf'])
-
     def calculate_dh_params(self) -> None:
         self._print('calculate_dh_params')
         # Node process order:
@@ -241,16 +229,6 @@ class GenerateDhParams(rclpy.node.Node):
 
     def _get_joint_dh_params(self, rel_link_frame, axis) -> np.ndarray:
         dh_params = np.zeros(4)
-
-        # Get the joint axis in the parent frame
-        # for joint_name, joint_data in self.urdf_joints.items():
-        #     print(joint_name)
-        #     parent_tf_to_child_tf = kh.get_extrinsic_rotation(joint_data['rpy'])
-        #     # print(parent_tf_to_child_tf)
-
-        #     axis_in_parent_tf = parent_tf_to_child_tf @ joint_data['axis']
-        #     self.publish_arrow(joint_data['parent'], joint_data['xyz'], axis_in_parent_tf)
-        #     # print(axis_in_parent_tf)
         origin_xyz = rel_link_frame[0:3, 3]
         z_axis = np.array([0., 0., 1.])
         self._print(axis)
@@ -351,8 +329,6 @@ class GenerateDhParams(rclpy.node.Node):
         zaxis = np.array([0., 0., 1.])
         dh_params[3] = math.atan2(np.dot(np.cross(zaxis, direction), vn), np.dot(zaxis, direction))
 
-        # print('points = ', pointA, pointB)
-        # print('dh params = ', dh_params)
         return dh_params
 
 
