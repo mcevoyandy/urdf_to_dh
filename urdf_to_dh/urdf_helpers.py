@@ -34,6 +34,7 @@ def process_joint(joint: ET.Element) -> tuple[str, dict]:
             - parent: the parent link of the joint (ET.Element)
             - child: the child link of the joint (ET.Element)
             - dh: the dh parameters for the joint (np.ndarray)
+            - type: the type of joint (str), e.g. 'revolute'.
     """
     axis = np.array([1, 0, 0])
     xyz = np.zeros(3)
@@ -42,6 +43,7 @@ def process_joint(joint: ET.Element) -> tuple[str, dict]:
     child_link = ''
 
     joint_name = joint.get('name')
+    type_ = joint.get('type')
 
     for child in joint:
         if child.tag == 'axis':
@@ -62,5 +64,6 @@ def process_joint(joint: ET.Element) -> tuple[str, dict]:
                 'parent': parent_link,
                 'child': child_link,
                 'dh': np.zeros(4),
+                'type': type_,
             },
     )

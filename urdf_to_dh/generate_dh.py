@@ -20,6 +20,7 @@ import pprint
 import rclpy
 import rclpy.node
 
+import anytree
 from anytree import AnyNode
 from anytree import LevelOrderIter
 from anytree import RenderTree
@@ -41,12 +42,15 @@ class GenerateDhParams(rclpy.node.Node):
 
         self.declare_parameter('urdf_file', rclpy.Parameter.Type.STRING)
         # The map {joint_name: joint_info}, where joint_info is a map with keys
-        # 'axis', 'xyz', 'rpy', 'parent', 'child', 'dh'.
+        # 'axis', 'xyz', 'rpy', 'parent', 'child', 'dh', 'type'.
         self.urdf_joints: dict[str, dict] = {}
         self.urdf_links: dict[str, dict] = {}
         self.urdf_file = ''
         self.urdf_tree_nodes: list[AnyNode] = []
         self.root_node: AnyNode | None = None
+        # The simplified tree is the tree where all fixed joints not required
+        # for the kinematics are removed. It contains only links.
+        self.simplified_tree_root: AnyNode | None = None
         self.verbose = False
         self.marker_pub = mh.MarkerPublisher()
 
@@ -104,6 +108,45 @@ class GenerateDhParams(rclpy.node.Node):
         self.urdf_links[self.root_node.id]['dh_found'] = True
         print('URDF Tree:')
         for pre, _, node in RenderTree(self.root_node):
+            print(f'{pre}{node.id}')
+
+        # Construct the simplified tree, without fixed joints
+        # except for leaf links.
+
+        root_node = AnyNode(
+                id=self.root_node.id,
+                parent=None,
+                children=None,
+        )
+        self.simplified_tree_root = root_node
+
+        leafs = anytree.findall(self.root_node, filter_=lambda n: n.is_leaf)
+        for leaf in leafs:
+            r, *path = leaf.path
+            last_added_link = root_node
+            for n in path:
+                if n.type == 'joint':
+                    continue
+                simplified_node = anytree.find(
+                        root_node,
+                        filter_=lambda node: node.id == n.id,
+                        )
+                if simplified_node:
+                    # Already in the tree.
+                    last_added_link = simplified_node
+                    continue
+                if ((self.urdf_joints[n.parent.id]['type'] != 'fixed')
+                        or n.is_leaf
+                ):
+                    node = AnyNode(
+                            id=n.id,
+                            parent=last_added_link,
+                            children=None,
+                    )
+                    last_added_link = node
+
+        print('\nSimplified URDF Tree (without irrelevant joints for the kinematics):')
+        for pre, _, node in RenderTree(self.simplified_tree_root):
             print(f'{pre}{node.id}')
 
         print('Joint Info:')
