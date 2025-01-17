@@ -222,11 +222,13 @@ class GenerateDhParams(rclpy.node.Node):
 
                 self.urdf_links[urdf_node.id]['abs_dh_tf'] = abs_dh_frame
                 self.marker_pub.publish_frame('world', abs_dh_frame)
-                robot_dh_params.append([urdf_node.parent.id, urdf_node.parent.parent.id, urdf_node.id] + list(dh_params.round(5)))
+                robot_dh_params.append([urdf_node.parent.id, urdf_node.parent.parent.id, urdf_node.id] + list(dh_params))
 
         pd_frame = pd.DataFrame(robot_dh_params, columns=['joint', 'parent', 'child', 'd', 'theta', 'r', 'alpha'])
-        pd_frame['theta'] *= 180.0 / math.pi
-        pd_frame['alpha'] *= 180.0 / math.pi
+        pd_frame['r'] = pd_frame['r'].round(6)
+        pd_frame['d'] = pd_frame['d'].round(6)
+        pd_frame['theta'] = np.degrees(pd_frame['theta']).round(5)
+        pd_frame['alpha'] = np.degrees(pd_frame['alpha']).round(5)
         print('\nDH Parameters: (csv)')
         print(pd_frame.to_csv())
         print('\nDH Parameters: (markdown)')
