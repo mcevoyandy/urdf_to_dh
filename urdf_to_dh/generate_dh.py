@@ -254,27 +254,22 @@ class GenerateDhParams(rclpy.node.Node):
         origin_xyz = rel_link_frame[0:3, 3]
         z_axis = np.array([0, 0, 1])
         self._print(axis)
-        # Collinear case
+
         if gh.are_collinear(np.zeros(3), z_axis, origin_xyz, axis):
+            # Collinear case
             self._print('  Process collinear case.')
-            dh_params = self.process_collinear_case(origin_xyz, rel_link_frame[0:3, 0])
-            # continue
-
-        # Parallel case
+            dh_params = self._process_collinear_case(origin_xyz, rel_link_frame[0:3, 0])
         elif gh.are_parallel(z_axis, axis):
+            # Parallel case
             self._print('  Process parallel case.')
-            dh_params = self.process_parallel_case(origin_xyz)
-            # continue
-
-        # Intersect case
+            dh_params = self._process_parallel_case(origin_xyz)
         elif gh.lines_intersect(np.zeros(3), z_axis, origin_xyz, axis)[0]:
+            # Intersect case
             self._print('  Process intersection case.')
             self._print(rel_link_frame)
-            dh_params = self.process_intersection_case(origin_xyz, axis)
-            # continue
-
-        # Skew case
+            dh_params = self._process_intersection_case(origin_xyz, axis)
         else:
+            # Skew case
             self._print('  Process skew case.')
             dh_params = self._process_skew_case(origin_xyz, axis)
 
@@ -289,19 +284,19 @@ class GenerateDhParams(rclpy.node.Node):
         self._print(dh_params)
         return dh_params
 
-    def process_collinear_case(self, origin, xaxis) -> np.ndarray:
+    def _process_collinear_case(self, origin, xaxis) -> np.ndarray:
         dh_params = np.zeros(4)
         dh_params[0] = origin[2]
         return dh_params
 
-    def process_parallel_case(self, origin) -> np.ndarray:
+    def _process_parallel_case(self, origin) -> np.ndarray:
         dh_params = np.zeros(4)
         dh_params[0] = origin[2]
         dh_params[1] = math.atan2(origin[1], origin[0])
         dh_params[2] = math.sqrt(origin[0]**2 + origin[1]**2)
         return dh_params
 
-    def process_intersection_case(self, origin, axis) -> np.ndarray:
+    def _process_intersection_case(self, origin, axis) -> np.ndarray:
         dh_params = np.zeros(4)
         dh_params[0] = gh.lines_intersect(np.zeros(3), np.array([0, 0, 1]), origin, axis)[1][0]
 
