@@ -252,7 +252,7 @@ class GenerateDhParams(rclpy.node.Node):
         #     self.publish_arrow(joint_data['parent'], joint_data['xyz'], axis_in_parent_tf)
         #     # print(axis_in_parent_tf)
         origin_xyz = rel_link_frame[0:3, 3]
-        z_axis = np.array([0, 0, 1])
+        z_axis = np.array([0., 0., 1.])
         self._print(axis)
 
         if gh.are_collinear(np.zeros(3), z_axis, origin_xyz, axis):
@@ -302,19 +302,19 @@ class GenerateDhParams(rclpy.node.Node):
 
         zaxis = np.array([0., 0., 1.])
 
-        for i in range(0,3):
+        for i in range(3):
             if abs(axis[i]) < 1.e-5:
-                axis[i] = 0
+                axis[i] = 0.0
 
         cn = np.cross(zaxis, axis)
-        for i in range(0,3):
+        for i in range(3):
             if abs(cn[i]) < 1.e-6:
-                cn[i] = 0
-        if (cn[0] < 0):
-            cn = cn * -1
+                cn[i] = 0.0
+        if (cn[0] < 0.0):
+            cn = -cn
         dh_params[1] = math.atan2(cn[1], cn[0])
 
-        dh_params[2] = 0
+        dh_params[2] = 0.0
 
         vn = cn / np.linalg.norm(cn)
         dh_params[3] = math.atan2(np.dot(np.cross(zaxis, axis), vn), np.dot(zaxis, axis))
@@ -327,11 +327,10 @@ class GenerateDhParams(rclpy.node.Node):
 
     def _process_skew_case(self, origin, direction) -> np.ndarray:
         pointA = np.zeros(3)
-        pointB = np.zeros(3)
         dh_params = np.zeros(4)
 
         # Find closest points along parent z-axis (pointA) and joint axis (pointB)
-        t = -1.0 * (origin[0] * direction[0] + origin[1] * direction[1]) / (direction[0]**2 + direction[1]**2)
+        t = -(origin[0] * direction[0] + origin[1] * direction[1]) / (direction[0]**2 + direction[1]**2)
         pointB = origin + t * direction
         pointA[2] = pointB[2]
 
@@ -349,7 +348,7 @@ class GenerateDhParams(rclpy.node.Node):
         # https://stackoverflow.com/questions/5188561/signed-angle-between-two-3d-vectors-with-same-origin-within-the-same-plane/33920320#33920320
         cn = pointB - pointA
         vn = cn / np.linalg.norm(cn)
-        zaxis = np.array([0, 0, 1])
+        zaxis = np.array([0., 0., 1.])
         dh_params[3] = math.atan2(np.dot(np.cross(zaxis, direction), vn), np.dot(zaxis, direction))
 
         # print('points = ', pointA, pointB)
