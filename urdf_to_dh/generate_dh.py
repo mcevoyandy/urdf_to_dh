@@ -37,7 +37,7 @@ from . import maker_helpers as mh
 class GenerateDhParams(rclpy.node.Node):
 
     def __init__(self):
-        super().__init__('generate_dh_param_node')
+        super().__init__('generate_dh_param')
 
         self.declare_parameter('urdf_file')
         # The map {joint_name: joint_info}, where joint_info is a map with keys
