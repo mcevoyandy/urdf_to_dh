@@ -2,13 +2,11 @@ import numpy as np
 
 EPSILON = 1.0e-5
 
+
 def are_parallel(vec1, vec2):
     """Determine if two vectors are parallel."""
     vec1_unit = vec1 / np.linalg.norm(vec1)
     vec2_unit = vec2 / np.linalg.norm(vec2)
-
-
-
     return np.all(abs(np.cross(vec1_unit, vec2_unit)) < EPSILON)
 
 

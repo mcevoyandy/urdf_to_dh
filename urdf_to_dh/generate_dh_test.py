@@ -14,8 +14,6 @@
 
 import unittest
 
-import pytest
-
 import rclpy
 import rclpy.node
 
